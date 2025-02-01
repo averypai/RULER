@@ -63,7 +63,7 @@ parser.add_argument("--num_needle_v", type=int, default=1)
 parser.add_argument("--num_needle_q", type=int, default=1)
 parser.add_argument("--type_haystack", type=str, default='essay', help='[Options] repeat, essay, needle.')
 parser.add_argument("--type_needle_k", type=str, default='words', help='[Options] numbers, words, uuids.')
-parser.add_argument("--type_needle_v", type=str, default='numbers', help='[Options] numbers, words, uuids.')
+parser.add_argument("--type_needle_v", type=str, default='solutions', help='[Options] solutions, numbers, words, uuids.')
 
 args = parser.parse_args()
 random.seed(args.random_seed)
@@ -77,8 +77,10 @@ TOKENIZER = select_tokenizer(args.tokenizer_type, args.tokenizer_path)
 needle = "One of the special magic {type_needle_v} for {key} is: {value}."
 if args.type_haystack == 'essay':
     # TODO: Modify this
-    essay = os.path.join(os.path.dirname(os.path.abspath(__file__)), "json/PaulGrahamEssays.json")
-    essay = json.load(open(essay))['text']
+    essay = ""
+    with open("haystack.jsonl", "r") as f:
+        conclusion = json.loads(f)['CONCLUSION']
+        essay += conclusion
     haystack = re.sub(r'\s+', " ", essay).split(" ")
 elif args.type_haystack == 'repeat':
     haystack = "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again."
@@ -112,21 +114,28 @@ def generate_random_word():
 def generate_random_uuid():
     return str(uuid.UUID(int=random.getrandbits(128), version=4))
 
-def generate_random(type_needle: str):
+def generate_solution():
+    # TODO: replace with solution
+    return generate_random_number()
+
+def generate_random(type_needle: str, num_needle: int=None):
     if type_needle == 'numbers':
-        # TODO: replace with solution
         return generate_random_number()
     elif type_needle == 'words':
         return generate_random_word()
     elif type_needle == 'uuids':
         return generate_random_uuid()
+    elif type_needle =='solutions':
+        # TODO: replace with solution
+        return generate_solution(num_needle)
     else:
         raise NotImplementedError(f'{args.type_needle} is not implemented.')
 
+# Need to check if the type of needle k
 def generate_input_output(num_haystack):
     keys, values, needles = [], [], []
-    for _ in range(args.num_needle_k):
-        keys.append(generate_random(args.type_needle_k))
+    for idx in range(args.num_needle_k):
+        keys.append(generate_random(args.type_needle_k, idx))
         value = []
         for _ in range(args.num_needle_v):
             value.append(generate_random(args.type_needle_v))
@@ -137,7 +146,7 @@ def generate_input_output(num_haystack):
             ))
         values.append(value)
     
-    random.Random(args.random_seed).shuffle(needles)
+    # random.Random(args.random_seed).shuffle(needles)
     
     # Context
     if args.type_haystack == 'essay':

@@ -75,7 +75,9 @@ def organize_conclusion(dataset, filename):
             data = {
             "idx": entry,
             'QUESTION': dataset[entry]['QUESTION'],
-            'CONCLUSION': conclusion
+            'CONCLUSION': conclusion,
+            "TYPE": dataset[entry]["MESHES"],
+            "FINAL_DECISION": dataset[entry]["final_decision"]
             }
             f.write(json.dumps(data) + '\n')
 
