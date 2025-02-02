@@ -115,7 +115,7 @@ def generate_random_word():
 def generate_random_uuid():
     return str(uuid.UUID(int=random.getrandbits(128), version=4))
 
-def generate_solution():
+def generate_solution(num_needle):
     # TODO: replace with solution
     return generate_random_number()
 
@@ -226,7 +226,7 @@ def generate_samples(num_samples: int, max_seq_length: int, save_dir: str, incre
     while total_tokens + tokens_to_generate < max_seq_length :  
         input_text, answer = generate_input_output(num_haystack)
         # Calculate the number of tokens in the example
-        total_tokens = len(TOKENIZER.text_to_tokens(input_text + ' '.join(answer)))
+        total_tokens = len(TOKENIZER.tokenize(input_text + ' '.join(answer)))
         print(f'Max length {max_seq_length} | Current length {total_tokens + tokens_to_generate} | Haystack: {num_haystack}')
         if total_tokens + tokens_to_generate > max_seq_length:
             num_haystack -= incremental
