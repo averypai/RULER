@@ -36,7 +36,7 @@ from pathlib import Path
 from tqdm import tqdm
 import random
 import wonderwords
-from nemo.collections.asr.parts.utils.manifest_utils import read_manifest, write_manifest
+# from nemo.collections.asr.parts.utils.manifest_utils import read_manifest, write_manifest
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")) 
 from tokenizer import select_tokenizer
@@ -79,8 +79,9 @@ if args.type_haystack == 'essay':
     # TODO: Modify this
     essay = ""
     with open("haystack.jsonl", "r") as f:
-        conclusion = json.loads(f)['CONCLUSION']
-        essay += conclusion
+        for line in f:
+            conclusion = json.loads(line)['CONCLUSION']
+            essay += conclusion
     haystack = re.sub(r'\s+', " ", essay).split(" ")
 elif args.type_haystack == 'repeat':
     haystack = "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again."
@@ -276,7 +277,7 @@ def main():
         save_dir=args.save_dir
     )
 
-    write_manifest(save_file, write_jsons)
+    # write_manifest(save_file, write_jsons)
 
 if __name__ == "__main__":
     main()

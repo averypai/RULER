@@ -15,6 +15,7 @@
 
 import os
 from typing import List
+from transformers import AutoTokenizer
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -27,7 +28,7 @@ def select_tokenizer(tokenizer_type, tokenizer_path):
     if tokenizer_type == 'nemo':
         return NeMoSentencePieceTokenizer(model_path=tokenizer_path)
     elif tokenizer_type == 'hf':
-        return HFTokenizer(model_path=tokenizer_path)
+        return AutoTokenizer.from_pretrained(tokenizer_path)
     elif tokenizer_type == 'openai':
         return OpenAITokenizer(model_path=tokenizer_path)
     elif tokenizer_type == 'gemini':
