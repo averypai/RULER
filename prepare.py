@@ -1,7 +1,7 @@
 import json
 import random
 
-def split_dataset(data, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, random_seed=42):
+def split_dataset(data, train_ratio=0.96, val_ratio=0.0, test_ratio=0.04, random_seed=42):
     """
     Split a dataset into training, validation, and test sets using random indexing.
     
