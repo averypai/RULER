@@ -133,19 +133,19 @@ def generate_random(type_needle: str, num_needle: int=None):
         raise NotImplementedError(f'{args.type_needle} is not implemented.')
 
 # Need to check if the type of needle k
-def generate_input_output(num_haystack):
-    keys, values, needles = [], [], []
-    for idx in range(args.num_needle_k):
-        keys.append(generate_random(args.type_needle_k, idx))
-        value = []
-        for _ in range(args.num_needle_v):
-            value.append(generate_random(args.type_needle_v))
-            needles.append(needle.format(
-                type_needle_v=args.type_needle_v,
-                key=keys[-1], 
-                value=value[-1],
-            ))
-        values.append(value)
+def generate_input_output(num_haystack, key, value, idx):
+    # keys, values, needles = [], [], []
+    # for idx in range(args.num_needle_k):
+    #     keys.append(generate_random(args.type_needle_k, idx))
+    #     value = []
+    #     for _ in range(args.num_needle_v):
+    #         value.append(generate_random(args.type_needle_v))
+    #         needles.append(needle.format(
+    #             type_needle_v=args.type_needle_v,
+    #             key=keys[-1], 
+    #             value=value[-1],
+    #         ))
+    #     values.append(value)
     
     # random.Random(args.random_seed).shuffle(needles)
     
@@ -161,8 +161,8 @@ def generate_input_output(num_haystack):
             last_pos = insertion_positions[i-1]
             next_pos = insertion_positions[i]
             document_sents_list.append(" ".join(document_sents[last_pos:next_pos]))
-            if i-1 < len(needles):
-                document_sents_list.append(needles[i-1])
+            if i-1 < len(value[idx]):
+                document_sents_list.append(value[idx][i-1])
         context = " ".join(document_sents_list)
 
     else:
@@ -171,21 +171,21 @@ def generate_input_output(num_haystack):
         elif args.type_haystack == 'needle':
             sentences = [haystack.format(
                 type_needle_v=args.type_needle_v,
-                key=generate_random(args.type_needle_k),
-                value=generate_random(args.type_needle_v),
-            ) for _ in range(num_haystack)]
+                key=key[idx][i],
+                value=value[idx][i],
+            ) for i in range(num_haystack)]
 
             
         indexes = sorted(random.sample(range(num_haystack), len(needles)), reverse=True)
-        for index, element in zip(indexes, needles):
+        for index, element in zip(indexes, value[idx]):
             sentences.insert(index, element)
         context = "\n".join(sentences)
 
 
     ## Query and Answer
     indices = random.sample(range(args.num_needle_k), args.num_needle_q)
-    queries = [keys[i] for i in indices]
-    answers = [a for i in indices for a in values[i]]
+    queries = [key[i] for i in indices]
+    answers = [a for i in indices for a in value[i]]
     query = ', '.join(queries[:-1]) + ', and ' + queries[-1] if len(queries) > 1 else queries[0]
     
     template = args.template
@@ -222,31 +222,38 @@ def generate_samples(num_samples: int, max_seq_length: int, save_dir: str, incre
 
     num_haystack = incremental
         
-    total_tokens = 0  # Track the total tokens generated for the first example
-    while total_tokens + tokens_to_generate < max_seq_length :  
-        input_text, answer = generate_input_output(num_haystack)
-        # Calculate the number of tokens in the example
-        total_tokens = len(TOKENIZER.tokenize(input_text + ' '.join(answer)))
-        print(f'Max length {max_seq_length} | Current length {total_tokens + tokens_to_generate} | Haystack: {num_haystack}')
-        if total_tokens + tokens_to_generate > max_seq_length:
-            num_haystack -= incremental
-            break
+    # total_tokens = 0  # Track the total tokens generated for the first example
+    # while total_tokens + tokens_to_generate < max_seq_length :  
+    #     input_text, answer = generate_input_output(num_haystack)
+    #     # Calculate the number of tokens in the example
+    #     total_tokens = len(TOKENIZER.tokenize(input_text + ' '.join(answer)))
+    #     print(f'Max length {max_seq_length} | Current length {total_tokens + tokens_to_generate} | Haystack: {num_haystack}')
+    #     if total_tokens + tokens_to_generate > max_seq_length:
+    #         num_haystack -= incremental
+    #         break
     
-        if args.type_haystack == 'essay' and num_haystack > len(haystack):
-            num_haystack = len(haystack)
-            break
+    #     if args.type_haystack == 'essay' and num_haystack > len(haystack):
+    #         num_haystack = len(haystack)
+    #         break
         
-        num_haystack += incremental
+    #     num_haystack += incremental
 
-    print('Num haystack:', num_haystack)
+    # print('Num haystack:', num_haystack)
     
     # Generate samples
+    key, value = [], []
+    with open('needle.jsonl', 'r') as needle:
+        for line in needle:
+            data = json.loads(line)
+            key.append(data['TYPE'])
+            value.append([data['CONCLUSION']])
+
     for index in tqdm(range(num_samples)):
         used_haystack = num_haystack
         while(True):
             try:
-                input_text, answer  = generate_input_output(used_haystack)
-                length = len(TOKENIZER.text_to_tokens(input_text)) + tokens_to_generate
+                input_text, answer  = generate_input_output(used_haystack, key, value, idx)
+                length = len(TOKENIZER.tokenize(input_text)) + tokens_to_generate
                 assert length <= max_seq_length, f"{length} exceeds max_seq_length."
                 break
             except:
