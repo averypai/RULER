@@ -278,6 +278,10 @@ def main():
     )
 
     # write_manifest(save_file, write_jsons)
+    with open(save_file, 'w') as f:
+        for line in write_jsons:
+            json.dump(line, f)
+            f.write('\n')
 
 if __name__ == "__main__":
     main()
